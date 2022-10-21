@@ -41,6 +41,10 @@ __USER_ID = None
 # Suppress warnings about project ID
 logging.getLogger('google.auth').setLevel(logging.ERROR)
 
+def set_custom_session(session):
+    global __SESSION
+    __SESSION = session
+
 #################################################
 # Utilities
 #################################################
