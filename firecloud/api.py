@@ -39,11 +39,27 @@ __SESSION = None
 __USER_ID = None
 
 # Suppress warnings about project ID
-logging.getLogger('google.auth').setLevel(logging.ERROR)
+logging.getLogger('google.auth').setLevel(logging.DEBUG)
 
-def set_custom_session(session):
+def set_custom_session(credentials):
     global __SESSION
-    __SESSION = session
+    global __USER_ID
+    
+    if __SESSION is None:
+        # determine if clock_skew_in_seconds is a parameter for id_token.verify_oauth2_token()
+        argspec = inspect.getfullargspec(id_token.verify_oauth2_token)
+            
+        __SESSION = AuthorizedSession(credentials)
+        health()
+        # google.auth 2.1.0 introduced a restrictive clock skew that was unmodifiable until 2.3.2
+        if 'clock_skew_in_seconds' in argspec.args:
+            __USER_ID = id_token.verify_oauth2_token(__SESSION.credentials.id_token,
+                                                        Request(session=__SESSION),
+                                                        clock_skew_in_seconds=10)['email']
+        else:
+            __USER_ID = id_token.verify_oauth2_token(__SESSION.credentials.id_token,
+                                                        Request(session=__SESSION))['email']
+        
 
 #################################################
 # Utilities
